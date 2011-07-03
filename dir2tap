@@ -1,0 +1,279 @@
+#! /usr/bin/perl -w
+
+###############################
+# version 006                 #
+# + notenames2notenbers       #
+###############################
+
+use strict;
+use Cwd;
+#use warnings; 
+
+##### LISTS ############################################""
+
+my %number2Notes; 
+@number2Notes{0 .. 127} = ( # format 'S'
+# (Do)        (Re)         (Mi)  (Fa)         (So)         (La)        (Ti)
+ 'C0', 'Cs0', 'D0', 'Ds0', 'E0', 'F0', 'Fs0', 'G0', 'Gs0', 'A0', 'As0', 'B0',
+ 'C1', 'Cs1', 'D1', 'Ds1', 'E1', 'F1', 'Fs1', 'G1', 'Gs1', 'A1', 'As1', 'B1',
+ 'C2', 'Cs2', 'D2', 'Ds2', 'E2', 'F2', 'Fs2', 'G2', 'Gs2', 'A2', 'As2', 'B2',
+ 'C3', 'Cs3', 'D3', 'Ds3', 'E3', 'F3', 'Fs3', 'G3', 'Gs3', 'A3', 'As3', 'B3',
+ 'C4', 'Cs4', 'D4', 'Ds4', 'E4', 'F4', 'Fs4', 'G4', 'Gs4', 'A4', 'As4', 'B4',
+ 'C5', 'Cs5', 'D5', 'Ds5', 'E5', 'F5', 'Fs5', 'G5', 'Gs5', 'A5', 'As5', 'B5',
+ 'C6', 'Cs6', 'D6', 'Ds6', 'E6', 'F6', 'Fs6', 'G6', 'Gs6', 'A6', 'As6', 'B6',
+ 'C7', 'Cs7', 'D7', 'Ds7', 'E7', 'F7', 'Fs7', 'G7', 'Gs7', 'A7', 'As7', 'B7',
+ 'C8', 'Cs8', 'D8', 'Ds8', 'E8', 'F8', 'Fs8', 'G8', 'Gs8', 'A8', 'As8', 'B8',
+ 'C9', 'Cs9', 'D9', 'Ds9', 'E9', 'F9', 'Fs9', 'G9', 'Gs9', 'A9', 'As9', 'B9',
+ 'C10','Cs10','D10','Ds10','E10','F10','Fs10','G10',
+  # Note number 69 reportedly == A440, under a default tuning.
+  # and note 60 = Middle C
+);
+
+my %nOtes2number = reverse %number2Notes;
+my %number2Noteb;
+@number2Noteb{ 0 .. 127} = ( # format 'B'
+# (Do)        (Re)         (Mi)  (Fa)         (So)         (La)        (Ti)
+ 'C0', 'Db0', 'D0', 'Eb0', 'E0', 'F0', 'Gb0', 'G0', 'Ab0', 'A0', 'Bb0', 'B0',
+ 'C1', 'Db1', 'D1', 'Eb1', 'E1', 'F1', 'Gb1', 'G1', 'Ab1', 'A1', 'Bb1', 'B1',
+ 'C2', 'Db2', 'D2', 'Eb2', 'E2', 'F2', 'Gb2', 'G2', 'Ab2', 'A2', 'Bb2', 'B2',
+ 'C3', 'Db3', 'D3', 'Eb3', 'E3', 'F3', 'Gb3', 'G3', 'Ab3', 'A3', 'Bb3', 'B3',
+ 'C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4',
+ 'C5', 'Db5', 'D5', 'Eb5', 'E5', 'F5', 'Gb5', 'G5', 'Ab5', 'A5', 'Bb5', 'B5',
+ 'C6', 'Db6', 'D6', 'Eb6', 'E6', 'F6', 'Gb6', 'G6', 'Ab6', 'A6', 'Bb6', 'B6',
+ 'C7', 'Db7', 'D7', 'Eb7', 'E7', 'F7', 'Gb7', 'G7', 'Ab7', 'A7', 'Bb7', 'B7',
+ 'C8', 'Db8', 'D8', 'Eb8', 'E8', 'F8', 'Gb8', 'G8', 'Ab8', 'A8', 'Bb8', 'B8',
+ 'C9', 'Db9', 'D9', 'Eb9', 'E9', 'F9', 'Gb9', 'G9', 'Ab9', 'A9', 'Bb9', 'B9',
+ 'C10','Db10','D10','Eb10','E10','F10','Gb10','G10',
+);
+my %nOteb2number = reverse %number2Noteb;
+
+my %number2notes; 
+@number2notes{0 .. 127} = ( # format '#'
+# (Do)        (Re)         (Mi)  (Fa)         (So)         (La)        (Ti)
+ 'c0', 'c#0', 'd0', 'd#0', 'e0', 'f0', 'f#0', 'g0', 'g#0', 'a0', 'a#0', 'b0',
+ 'c1', 'c#1', 'd1', 'd#1', 'e1', 'f1', 'f#1', 'g1', 'g#1', 'a1', 'a#1', 'b1',
+ 'c2', 'c#2', 'd2', 'd#2', 'e2', 'f2', 'f#2', 'g2', 'g#2', 'a2', 'a#2', 'b2',
+ 'c3', 'c#3', 'd3', 'd#3', 'e3', 'f3', 'f#3', 'g3', 'g#3', 'a3', 'a#3', 'b3',
+ 'c4', 'c#4', 'd4', 'd#4', 'e4', 'f4', 'f#4', 'g4', 'g#4', 'a4', 'a#4', 'b4',
+ 'c5', 'c#5', 'd5', 'd#5', 'e5', 'f5', 'f#5', 'g5', 'g#5', 'a5', 'a#5', 'b5',
+ 'c6', 'c#6', 'd6', 'd#6', 'e6', 'f6', 'f#6', 'g6', 'g#6', 'a6', 'a#6', 'b6',
+ 'c7', 'c#7', 'd7', 'd#7', 'e7', 'f7', 'f#7', 'g7', 'g#7', 'a7', 'a#7', 'b7',
+ 'c8', 'c#8', 'd8', 'd#8', 'e8', 'f8', 'f#8', 'g8', 'g#8', 'a8', 'a#8', 'b8',
+ 'c9', 'c#9', 'd9', 'd#9', 'e9', 'f9', 'f#9', 'g9', 'g#9', 'a9', 'a#9', 'b9',
+ 'c10','c#10','d10','d#10','e10','f10','f#10','g10',
+  # Note number 69 reportedly == A440, under a default tuning.
+  # and note 60 = Middle C
+);
+
+my %notes2number = reverse %number2notes;
+
+my %number2noteb;
+@number2noteb{ 0 .. 127} = (
+# (Do)        (Re)         (Mi)  (Fa)         (So)         (La)        (Ti)
+ 'c0', 'db0', 'd0', 'eb0', 'e0', 'f0', 'gb0', 'g0', 'ab0', 'a0', 'bb0', 'b0',
+ 'c1', 'db1', 'd1', 'eb1', 'e1', 'f1', 'gb1', 'g1', 'ab1', 'a1', 'bb1', 'b1',
+ 'c2', 'db2', 'd2', 'eb2', 'e2', 'f2', 'gb2', 'g2', 'ab2', 'a2', 'bb2', 'b2',
+ 'c3', 'db3', 'd3', 'eb3', 'e3', 'f3', 'gb3', 'g3', 'ab3', 'a3', 'bb3', 'b3',
+ 'c4', 'db4', 'd4', 'eb4', 'e4', 'f4', 'gb4', 'g4', 'ab4', 'a4', 'bb4', 'b4',
+ 'c5', 'db5', 'd5', 'eb5', 'e5', 'f5', 'gb5', 'g5', 'ab5', 'a5', 'bb5', 'b5',
+ 'c6', 'db6', 'd6', 'eb6', 'e6', 'f6', 'gb6', 'g6', 'ab6', 'a6', 'bb6', 'b6',
+ 'c7', 'db7', 'd7', 'eb7', 'e7', 'f7', 'gb7', 'g7', 'ab7', 'a7', 'bb7', 'b7',
+ 'c8', 'db8', 'd8', 'eb8', 'e8', 'f8', 'gb8', 'g8', 'ab8', 'a8', 'bb8', 'b8',
+ 'c9', 'db9', 'd9', 'eb9', 'e9', 'f9', 'gb9', 'g9', 'ab9', 'a9', 'bb9', 'b9',
+ 'c10','db10','d10','eb10','e10','f10','gb10','g10',
+);
+my %noteb2number = reverse %number2noteb;
+
+
+my $dir = $ARGV[0];
+$dir = getcwd    unless -d $ARGV[0];
+if ($ARGV[0]) { $dir = shift @ARGV; }
+$dir =~ s/\/$//;
+die "dir2tap: $dir is not a directory\n" unless -d $dir;
+die "dir2tap: directory $dir does not exist\nusage:\ndir2tap.pl /path/to/very\\ long/dir\n" unless -e $dir; #(-e $dir && -d $dir) doesn't work; 
+die "dir2tap: can not read directory $dir\n" unless -r $dir;
+#$dir =~ s'/$'';
+
+# sub routines #############################################################
+
+sub loaddirectory { # reads given directory and returns list of samples
+  if ($_[0] && -d $_[0]) {
+    #my $dirr = shift @_;
+    opendir(my $dirr, $_[0]) || die "can't opendir $_[0]: $!";
+#    ($dirr = getcwd . '/' . $dirr) unless ($dirr =~ m#^/#); # to make calling dir2tap from the current dir, without arguments, possible
+    my @wavfiles =grep {/.wav$/} readdir($dirr);
+    my @flacfiles = grep {/.wav$/} readdir($dirr);
+    if (@wavfiles or @flacfiles) {print "Processing ";}
+    if (@flacfiles) { print scalar(@flacfiles) . " FLAC"; }
+    if (@wavfiles && @flacfiles) { print " and ";}
+    if (@wavfiles) { print scalar(@wavfiles) . " WAV"; }
+    if (@wavfiles or @flacfiles) {print " files, ";}
+
+    #print "no wav files in directory \"$dirr\"\n" unless @wavfiles;
+    #print "no flac files in directory \"$dirr\".\n " unless @flacfiles;
+    die "dir2tap: No samples found in " . $_[0] . ", choose life, or just another directory.\n" unless (@wavfiles or @flacfiles);
+    print "combining in one .tap file.\n" if (@wavfiles && @flacfiles);
+    my @thefiles = (@wavfiles, @flacfiles);
+    @thefiles;
+  }
+}
+
+# work that $xmlhead and print to TAPFILE
+sub doheadwork {
+  my $head = shift @_;
+  my $kitname = shift @_;
+  $head =~ s/==kitname==/$kitname/g;
+  print TAPFILE $head;
+}
+
+# work that $xmlbody and print to TAPFILE, also return current next $note and current $channel
+# arguments are: &bodywork($note, $channel, $file, $xmlbody)
+sub dobodywork { 
+  my $note = shift @_;
+  my $channel = shift @_;
+  my $file = shift @_;
+  my $body = shift @_;
+  $body =~ s/==note==/$note/g;
+  $body =~ s/==channel==/$channel/;
+  $body =~ s/==sample==/$file/;
+  $file =~ s#^.*/##s;
+  $body =~ s/==sampleRelative==/$file/;
+  $file =~ s/\.wav$//;
+  $file =~ s/\.flac$//;
+  $body =~ s/==name==/$file/;
+
+  print TAPFILE $body;
+  if ($note < 127) { # rootnote must rise but not above 127
+    $note++;
+  } else { # restart from note 0 but on the next channel
+    $note = 0;
+    $channel++;
+  }
+  ($note, $channel);
+}
+
+#check if the files names end in eg.'Eb3' or 'As2' right before the '.wav' . Return '1', 'b' or 's'
+sub getformat 
+{
+  my @filelist = @_;
+  my $format='1';
+  foreach (@filelist) 
+  {  # print "$_\n";
+    if (m/[A-G]b\d$/) 
+    {
+      $format = 'B';
+    } else 
+    {
+      if (m/[A-G]s\d$/) 
+      {
+	$format = 'S';
+      } else 
+      {
+	if (m/[a-g]#\d$/)
+	{
+	  $format = '#';
+	} else 
+	{ 
+	  if (m/[A-G]\d$/) 
+	  {
+	    $format= 'A' unless $format eq ('B'|'S'|'#'|'a');
+	  } else 
+	  {
+	    if (m/[a-g]\d$/) 
+	    {
+	      $format='a' unless $format eq ('B'|'S'|'#'|'A');
+	    } else 
+	    {
+	      $format = '0';
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return $format;
+}
+
+# data definintions #######################################################
+my $xmlhead = <<HEAD;
+<?xml version="1.0" encoding="UTF-8"?>
+<tapeutape version="0.1.0">
+  <options globalvolume="1.000000" max_polyphony="100">
+    <jack-output name="output"/>
+  </options>
+  <creation>
+    <setup name="==kitname==" channel="1" cc="-1">
+      <kit name="==kitname==">
+HEAD
+
+my $xmlbody = <<BODY;
+        <instrument name="==name==" minnote="==note==" maxnote="==note==" rootnote="==note==" channel="==channel==" cut="-1" polyphony="0" output="output" volume="1.000000" pan="0.000000" pitch_over_range="true" play_mode="normal">
+          <variation minveloc="0" maxveloc="127" sample="==sample==" sampleRelative="==sampleRelative=="/>
+        </instrument>
+BODY
+
+my $xmlfoot = <<FOOT;
+      </kit>
+    </setup>
+  </creation>
+</tapeutape>
+FOOT
+# main program #############################################################
+
+
+my @files = &loaddirectory($dir);
+my @formats = @files;
+foreach my $name (@formats) { # remove the directory and extension from the names
+  $name =~ s#^.*/##s;
+  $name =~ s/\.wav$//;
+  $name =~ s/\.flac$//;
+  $name =~ s/.*\s([A-Ga-g]\d)/$1/;
+  $name =~ s/.*\s([A-Ga-g][s|b|#]\d)/$1/;
+}
+
+my $forma = &getformat(@formats);
+if ($forma eq ('B') or $forma eq ('1') or $forma eq ('S') or $forma eq ('#') or $forma eq ('A') or $forma eq ('a')) { print "Format $forma detected\n";}
+my $kitname = $dir;
+$kitname =~ s#^.*/##s;
+
+open TAPFILE, "> $dir/$kitname.tap" or die $!;
+print "$kitname.tap is created in $dir.\n";
+
+&doheadwork($xmlhead, $kitname);
+
+my $note = 0;
+my $channel = 0;
+foreach my $file (@files) { # work that $xmlbody and print to TAPFILE
+  (print "filename $file must not contain quotes.\nNot included in $kitname.tap! \n" && next) if $file =~ m/["']/; 
+  if ($forma eq ('B') or $forma eq ('1') or $forma eq ('A')) {
+    my $notename = $file; 
+    $notename =~ s/.*(([A-G]b|[A-G])\d)/$1/;
+    $notename =~ s/.wav$//;
+    $notename =~ s/.flac$//;
+    $note = $nOteb2number{$notename};
+    &dobodywork($note, $channel, $file, $xmlbody);  
+  } elsif ($forma eq 'S') {
+    my $notename = $file; 
+    $notename =~ s/.*(([A-G]s|[A-G])\d)/$1/;
+    $notename =~ s/.wav$//;
+    $notename =~ s/.flac$//;
+    $note = $nOtes2number{$notename};
+    &dobodywork($note, $channel, $file, $xmlbody); 
+  } elsif ($forma eq '#' or $forma eq ('a')) {
+    my $notename = $file; 
+    $notename =~ s/.*(([a-g]#|[a-g])\d)/$1/;
+    $notename =~ s/.wav$//;
+    $notename =~ s/.flac$//;
+    $note = $notes2number{$notename};
+    &dobodywork($note, $channel, $file, $xmlbody); 
+  } else {
+    ($note, $channel) = &dobodywork($note, $channel, $file, $xmlbody);
+  }
+  (print "Note number 127 reached, restarting on the next channel nr ", $channel+1 , ".\n") if $note == 0 ;
+}
+
+print TAPFILE $xmlfoot;
+
+# fd is autoclosed on end
+
+
